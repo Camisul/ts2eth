@@ -1,12 +1,13 @@
-import { extendConfig, extendEnvironment } from "hardhat/config";
-import { lazyObject } from "hardhat/plugins";
-import { HardhatConfig, HardhatUserConfig } from "hardhat/types";
-import path from "path";
+import { TASK_COMPILE_SOLIDITY } from 'hardhat/builtin-tasks/task-names';
+import { extendConfig, extendEnvironment, internalTask } from 'hardhat/config';
+import { lazyObject } from 'hardhat/plugins';
+import { HardhatConfig, HardhatUserConfig } from 'hardhat/types';
+import path from 'path';
+import { beforeCompileHook } from './hooks';
 
-import { ExampleHardhatRuntimeEnvironmentField } from "./ExampleHardhatRuntimeEnvironmentField";
 // This import is needed to let the TypeScript compiler know that it should include your type
 // extensions in your npm package's types file.
-import "./type-extensions";
+import './type-extensions';
 
 extendConfig(
   (config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
@@ -26,7 +27,7 @@ extendConfig(
 
     let newPath: string;
     if (userPath === undefined) {
-      newPath = path.join(config.paths.root, "newPath");
+      newPath = path.join(config.paths.root, 'newPath');
     } else {
       if (path.isAbsolute(userPath)) {
         newPath = userPath;
@@ -41,9 +42,12 @@ extendConfig(
   }
 );
 
-extendEnvironment((hre) => {
-  // We add a field to the Hardhat Runtime Environment here.
-  // We use lazyObject to avoid initializing things until they are actually
-  // needed.
-  hre.example = lazyObject(() => new ExampleHardhatRuntimeEnvironmentField());
-});
+
+internalTask(TASK_COMPILE_SOLIDITY).setAction(
+  async (arg: any, hre, runSuper) => {
+    console.log('BEFORE COMPILE', process.cwd());
+    await beforeCompileHook();
+    const _ = await runSuper(arg);
+    console.log('AFTER COMPILE');
+  }
+);

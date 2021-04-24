@@ -5,6 +5,11 @@
     "tslint-config-prettier"
   ],
   "rules": {
+    "quotemark": [
+      true,
+      "single",
+      "jsx-double"
+    ],
     "prettier": true,
     "object-literal-sort-keys": false,
     "no-submodule-imports": false,
