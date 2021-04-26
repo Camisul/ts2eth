@@ -1,6 +1,5 @@
-import { assert } from 'console';
 import * as ts from 'typescript';
-import { Err, Ok, Result, unsafe_cast } from './ts-util';
+import { ArrayMatchAny, Err, Ok, Raise, Result, unsafe_cast } from './ts-util';
 
 const DEFAULT_OPTS: ts.CompilerOptions = {};
 export async function getDesiredTypesFromFile(filename: string) {
@@ -30,12 +29,13 @@ export async function getDesiredTypesFromFile(filename: string) {
     }
   }
 
-  interface InternalType {
-
-  }
   interface TypeInfo {
     name: string,
     internal_type: InternalType,
+  }
+
+  interface SymbolObject {
+    parent: any;
   }
 
   function propsToMapping(props: ts.Symbol[]): Result<TypeInfo[]> {
@@ -46,19 +46,61 @@ export async function getDesiredTypesFromFile(filename: string) {
       if (!decl.type)
         return Err('No type to declare');
       const name = decl.name.getFullText().trim();
-      const internal_type = declaredTypeToInternal(decl.type!);
-      if (!internal_type)
-        return Err('No internal type found');
-      res.push({ name, internal_type: {} })
+      const [err, internal_type] = declaredTypeToInternal(decl.type!);
+      if (err)
+        return Raise(err);
+      // Good job typescript thanks for forcing me to fix things that arent broken
+      res.push({name, internal_type: internal_type! })
     }
 
-    function declaredTypeToInternal(type_node: ts.TypeNode): InternalType {
+    function declaredTypeToInternal(type_node: ts.TypeNode): Result<InternalType> {
       const type = checker.getTypeFromTypeNode(type_node);
       const symbol = type.aliasSymbol || type.getSymbol();
-      if(!symbol || !symbol.declarations)
-        return {}   
-      return {};
+      if (!symbol || !symbol.declarations)
+        return Err('No type/interface declaration for type' + checker.typeToString(type));
+
+      // Extracting parrent from the symbol identify `origin` of a type
+      // if parrent is undefined then we are pretty shure that
+      // the type in question was defind locally/in the same file
+      //
+      // Probably not a bad idea to get rid of it in favour of just checking 
+      // the full file name in the first declaration
+      const { parent } = unsafe_cast<SymbolObject>(symbol);
+
+      const from_known_file = ArrayMatchAny(getKnownFiles(), (e) =>
+        symbol.declarations[0].getSourceFile().fileName.endsWith(e)
+      );
+      const type_str = checker.typeToString(type);
+
+      if (!parent || !from_known_file)
+        return Err(`${type_str}: Complex types are not supported`);
+
+      const internal_type = getKnownTypes().find(e => e.ts_name == type_str);
+      if (!internal_type)
+        return Err('Unknown type: ' + type_str);
+
+      return Ok(internal_type);
     }
+
     return Ok(res);
   }
+}
+
+interface InternalType {
+  ts_name: string;
+  sol_name: string;
+  enc_name: string;
+}
+
+
+function getKnownFiles(): Array<string> {
+  return ['']
+}
+
+function getKnownTypes(): Array<InternalType> {
+  return [{
+    ts_name: '',
+    sol_name: '',
+    enc_name: '',
+  }]
 }
