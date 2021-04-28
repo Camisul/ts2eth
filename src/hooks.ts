@@ -7,8 +7,12 @@ type globFn = (pattern: string) => Promise<string[]>;
 const glob: globFn = unsafe_cast<globFn>(promisify(Glob.Glob));
 
 export async function beforeCompileHook() {
-  const files = await glob('./**[!node_modules]/*.ts');
+  
+  const files = await glob('./**/!(*.config).ts');
+  console.log(files);
   files.forEach(e => {
-    const type_info = getDesiredTypesFromFile(e);
+    console.log(e)
+    getDesiredTypesFromFile(e).then(e => e).catch(err => console.error);
+
   });
 }

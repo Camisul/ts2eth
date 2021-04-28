@@ -45,9 +45,7 @@ extendConfig(
 
 internalTask(TASK_COMPILE_SOLIDITY).setAction(
   async (arg: any, hre, runSuper) => {
-    console.log('BEFORE COMPILE', process.cwd());
     await beforeCompileHook();
     const _ = await runSuper(arg);
-    console.log('AFTER COMPILE');
   }
 );

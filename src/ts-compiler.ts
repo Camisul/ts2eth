@@ -7,7 +7,6 @@ export async function getDesiredTypesFromFile(filename: string) {
   const checker = prog.getTypeChecker();
 
   prog.getSourceFiles().forEach(e => !e.isDeclarationFile && ts.forEachChild(e, visit))
-
   function visit(node: ts.Node) {
     if (ts.isCallExpression(node))
       handleCallExpr(node);
@@ -20,13 +19,17 @@ export async function getDesiredTypesFromFile(filename: string) {
       return;
 
     const type = checker.getTypeFromTypeNode(node.typeArguments[0]);
+    console.log(node.getFullText());
     const type_name = checker.typeToString(type);
     const props = checker.getPropertiesOfType(type);
+    console.log('Call expr', node.getSourceFile().fileName);
     const [err, mapping] = propsToMapping(props);
     if (err) {
       console.error(err);
       return;
     }
+
+    console.log(mapping);
   }
 
   interface TypeInfo {
@@ -42,7 +45,7 @@ export async function getDesiredTypesFromFile(filename: string) {
     const res = [];
 
     for (const prop of props) {
-      const decl = unsafe_cast<ts.PropertyDeclaration>(prop);
+      const decl = unsafe_cast<ts.PropertyDeclaration>(prop.valueDeclaration);
       if (!decl.type)
         return Err('No type to declare');
       const name = decl.name.getFullText().trim();
@@ -54,10 +57,14 @@ export async function getDesiredTypesFromFile(filename: string) {
     }
 
     function declaredTypeToInternal(type_node: ts.TypeNode): Result<InternalType> {
+      
+      // TODO: Make this accepnt not only `inteface` defined types but `type` defind types
+
       const type = checker.getTypeFromTypeNode(type_node);
       const symbol = type.aliasSymbol || type.getSymbol();
+      
       if (!symbol || !symbol.declarations)
-        return Err('No type/interface declaration for type' + checker.typeToString(type));
+        return Err('No type/interface declaration for type ' + checker.typeToString(type));
 
       // Extracting parrent from the symbol identify `origin` of a type
       // if parrent is undefined then we are pretty shure that
@@ -84,6 +91,7 @@ export async function getDesiredTypesFromFile(filename: string) {
 
     return Ok(res);
   }
+  //exit(0);
 }
 
 interface InternalType {
@@ -94,13 +102,28 @@ interface InternalType {
 
 
 function getKnownFiles(): Array<string> {
-  return ['']
+  return ['sol_types.ts']
 }
 
 function getKnownTypes(): Array<InternalType> {
   return [{
-    ts_name: '',
-    sol_name: '',
-    enc_name: '',
+    ts_name: 'Hash',
+    sol_name: 'bytes32',
+    enc_name: 'EncType.Bytes32',
+  },
+  {
+    ts_name: 'bytes32',
+    sol_name: 'bytes32',
+    enc_name: 'EncType.Bytes32',
+  },
+  {
+    ts_name: 'Address',
+    sol_name: 'address',
+    enc_name: 'EncType.address',
+  },
+  {
+    ts_name: 'Uint',
+    sol_name: 'uint',
+    enc_name: 'EncType.uint',
   }]
 }
