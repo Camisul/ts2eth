@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import { generate } from './generate';
 import { Err, Ok, Raise, Result, unsafe_cast } from './ts-util';
 
 
@@ -33,14 +34,15 @@ export async function getDesiredTypesFromFile(filename: string) {
       return;
 
     const type = checker.getTypeFromTypeNode(node.typeArguments[0]);
+    const type_name = checker.typeToString(type);
     const props = checker.getPropertiesOfType(type);
     const [err, mapping] = propsToMapping(props);
     if (err) {
       console.error(err);
       return;
     }
-
-    console.log(mapping);
+    generate(type_name, mapping!);
+    console.log({[type_name]: mapping});
   }
 
   interface SymbolObject {
