@@ -1,6 +1,5 @@
 import { TASK_COMPILE_SOLIDITY } from 'hardhat/builtin-tasks/task-names';
-import { extendConfig, extendEnvironment, internalTask } from 'hardhat/config';
-import { lazyObject } from 'hardhat/plugins';
+import { extendConfig, internalTask } from 'hardhat/config';
 import { HardhatConfig, HardhatUserConfig } from 'hardhat/types';
 import path from 'path';
 import { beforeCompileHook } from './hooks';
@@ -45,7 +44,7 @@ extendConfig(
 
 internalTask(TASK_COMPILE_SOLIDITY).setAction(
   async (arg: any, hre, runSuper) => {
-    await beforeCompileHook();
+    await beforeCompileHook(hre);
     const _ = await runSuper(arg);
   }
 );

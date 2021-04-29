@@ -91,6 +91,7 @@ export async function getDesiredTypesFromFile(filename: string) {
         return Err(`${type_str}: Complex types are not supported`);
       if (!from_known_file)
         return Err(`Depending on unknown file, currently not supported. Call \`generate\` in the file where interface \`${type_str}\` is defined`)
+
       const internal_type = getKnownTypes().find(e => e.ts_name == type_str);
       if (!internal_type)
         return Err('Unknown type: ' + type_str);
@@ -112,21 +113,21 @@ function getKnownTypes(): Array<InternalType> {
   return [{
     ts_name: 'Hash',
     sol_name: 'bytes32',
-    enc_name: 'EncType.Bytes32',
+    enc_name: 'Bytes32',
   },
   {
     ts_name: 'bytes32',
     sol_name: 'bytes32',
-    enc_name: 'EncType.Bytes32',
+    enc_name: 'Bytes32',
   },
   {
     ts_name: 'Address',
     sol_name: 'address',
-    enc_name: 'EncType.address',
+    enc_name: 'Address',
   },
   {
     ts_name: 'Uint',
     sol_name: 'uint',
-    enc_name: 'EncType.uint',
+    enc_name: 'Uint256',
   }]
 }
