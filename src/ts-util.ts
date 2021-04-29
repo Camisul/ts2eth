@@ -14,9 +14,3 @@ export function Err<T>(a: string): Result<T> {
 export function Raise<T>(err: Error): Result<T> {
   return [err, null];
 }
-
-export function ArrayMatchAny<T>(arr: Array<T>, cond: (e: T) => any) {
-  return arr.reduce<boolean>((acc, cv) => {
-    return acc || cond(cv);
-  }, false)
-}

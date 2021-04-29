@@ -1,4 +1,4 @@
-import { Hash, gen, Uint, bytes32, Address } from '../../../src/sol_types';
+import { Hash, gen, Uint, bytes32, Address } from '../../../src/types';
 interface iTest {
   some_hash: Hash
   some_uint: Uint

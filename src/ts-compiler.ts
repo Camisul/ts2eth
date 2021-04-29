@@ -1,5 +1,19 @@
 import * as ts from 'typescript';
-import { ArrayMatchAny, Err, Ok, Raise, Result, unsafe_cast } from './ts-util';
+import { Err, Ok, Raise, Result, unsafe_cast } from './ts-util';
+
+
+
+export interface TypeInfo {
+  name: string,
+  internal_type: InternalType,
+}
+
+export interface InternalType {
+  ts_name: string;
+  sol_name: string;
+  enc_name: string;
+}
+
 
 const DEFAULT_OPTS: ts.CompilerOptions = {};
 export async function getDesiredTypesFromFile(filename: string) {
@@ -19,10 +33,7 @@ export async function getDesiredTypesFromFile(filename: string) {
       return;
 
     const type = checker.getTypeFromTypeNode(node.typeArguments[0]);
-    console.log(node.getFullText());
-    const type_name = checker.typeToString(type);
     const props = checker.getPropertiesOfType(type);
-    console.log('Call expr', node.getSourceFile().fileName);
     const [err, mapping] = propsToMapping(props);
     if (err) {
       console.error(err);
@@ -30,11 +41,6 @@ export async function getDesiredTypesFromFile(filename: string) {
     }
 
     console.log(mapping);
-  }
-
-  interface TypeInfo {
-    name: string,
-    internal_type: InternalType,
   }
 
   interface SymbolObject {
@@ -48,21 +54,22 @@ export async function getDesiredTypesFromFile(filename: string) {
       const decl = unsafe_cast<ts.PropertyDeclaration>(prop.valueDeclaration);
       if (!decl.type)
         return Err('No type to declare');
+
       const name = decl.name.getFullText().trim();
       const [err, internal_type] = declaredTypeToInternal(decl.type!);
       if (err)
         return Raise(err);
+
       // Good job typescript thanks for forcing me to fix things that arent broken
-      res.push({name, internal_type: internal_type! })
+      res.push({ name, internal_type: internal_type! })
     }
 
     function declaredTypeToInternal(type_node: ts.TypeNode): Result<InternalType> {
-      
+
       // TODO: Make this accepnt not only `inteface` defined types but `type` defind types
 
       const type = checker.getTypeFromTypeNode(type_node);
       const symbol = type.aliasSymbol || type.getSymbol();
-      
       if (!symbol || !symbol.declarations)
         return Err('No type/interface declaration for type ' + checker.typeToString(type));
 
@@ -74,14 +81,14 @@ export async function getDesiredTypesFromFile(filename: string) {
       // the full file name in the first declaration
       const { parent } = unsafe_cast<SymbolObject>(symbol);
 
-      const from_known_file = ArrayMatchAny(getKnownFiles(), (e) =>
-        symbol.declarations[0].getSourceFile().fileName.endsWith(e)
-      );
+      const from_known_file = getKnownFiles().find(e => symbol.declarations[0].getSourceFile().fileName.endsWith(e));
+
       const type_str = checker.typeToString(type);
 
-      if (!parent || !from_known_file)
+      if (!parent)
         return Err(`${type_str}: Complex types are not supported`);
-
+      if (!from_known_file)
+        return Err(`Depending on unknown file, currently not supported. Call \`generate\` in the file where interface \`${type_str}\` is defined`)
       const internal_type = getKnownTypes().find(e => e.ts_name == type_str);
       if (!internal_type)
         return Err('Unknown type: ' + type_str);
@@ -94,15 +101,9 @@ export async function getDesiredTypesFromFile(filename: string) {
   //exit(0);
 }
 
-interface InternalType {
-  ts_name: string;
-  sol_name: string;
-  enc_name: string;
-}
-
 
 function getKnownFiles(): Array<string> {
-  return ['sol_types.ts']
+  return ['types/index.ts']
 }
 
 function getKnownTypes(): Array<InternalType> {
