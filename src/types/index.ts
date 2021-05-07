@@ -6,3 +6,5 @@ export function gen<T>() {
   // Do absolutely nothing
   return;
 }
+
+type AnyDefined = Hash | bytes32 | Uint | Address;

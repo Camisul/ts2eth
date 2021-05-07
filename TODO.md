@@ -1,0 +1,12 @@
+# TODO
+- [ ] Lib_RLPReader autoinclude
+- [ ] Prebuild task
+- [ ] tests
+- [ ] Pack function
+- [ ] More solidity types
+  - [ ] Bytes, not bytes32
+  - [ ] String
+  - [ ] Bool
+- [ ] README
+- [ ] github repo
+- [ ] npm packagea
