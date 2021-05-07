@@ -1,6 +1,7 @@
 # Ts2eth
 
 A way to generate bindings for typescrip interfaces for eth smartcontracts.
+
 Ignore the rest of this readme, a real readme coming soon:tm:
 
 --------
