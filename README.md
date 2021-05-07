@@ -3,7 +3,7 @@
 A way to generate bindings for typescrip interfaces for eth smartcontracts.
 Ignore the rest of this readme, a real readme coming soon:tm:
 
-==========
+--------
 # Hardhat TypeScript plugin boilerplate
 
 This is a sample Hardhat plugin written in TypeScript. Creating a Hardhat plugin
